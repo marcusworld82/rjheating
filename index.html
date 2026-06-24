@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>R.J. Heating & Cooling | Cleveland's HVAC Experts Since 1946</title>
+  <meta name="description" content="R.J. Heating & Cooling has served Northeast Ohio since 1946. NATE-certified techs, Bryant factory authorized dealer. Furnace repair, AC service, heat pumps. Call today." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    body { background: #04080f; color: #e2e8f0; overflow-x: hidden; cursor: none; }
+
+    /* Cursor */
+    #cursor { position: fixed; width: 20px; height: 20px; border-radius: 50%; background: #2563eb; mix-blend-mode: difference; pointer-events: none; z-index: 9999; transform: translate(-50%,-50%); transition: width .2s, height .2s; }
+    #cursor-follower { position: fixed; width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(37,99,235,.5); pointer-events: none; z-index: 9998; transform: translate(-50%,-50%); transition: left .15s ease, top .15s ease; }
+
+    /* Glass */
+    .glass { background: rgba(255,255,255,.04); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.08); }
+    .glass-blue { background: rgba(37,99,235,.08); backdrop-filter: blur(16px); border: 1px solid rgba(37,99,235,.25); }
+    .glass-red { background: rgba(220,38,38,.08); backdrop-filter: blur(16px); border: 1px solid rgba(220,38,38,.2); }
+
+    /* Canvas */
+    #particle-canvas { position: fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+
+    /* Scroll reveal */
+    .fade-up { opacity:0; transform:translateY(40px); }
+    .fade-left { opacity:0; transform:translateX(-40px); }
+    .fade-right { opacity:0; transform:translateX(40px); }
+
+    /* Fizzy btn */
+    .btn-fizzy { position:relative; overflow:hidden; transition:transform .2s, box-shadow .2s; }
+    .btn-fizzy:hover { transform:scale(1.05); box-shadow:0 0 30px rgba(37,99,235,.55); }
+    .btn-fizzy:active { transform:scale(.97); }
+    .btn-fizzy::after { content:''; position:absolute; inset:0; background:radial-gradient(circle at var(--x,50%) var(--y,50%), rgba(255,255,255,.18) 0%, transparent 60%); opacity:0; transition:opacity .3s; }
+    .btn-fizzy:hover::after { opacity:1; }
+    .btn-red:hover { box-shadow:0 0 30px rgba(220,38,38,.55) !important; }
+
+    /* Bento */
+    .bento-grid { display:grid; grid-template-columns:repeat(12,1fr); gap:16px; }
+    .b1 { grid-column:span 7; } .b2 { grid-column:span 5; } .b3 { grid-column:span 5; } .b4 { grid-column:span 7; }
+    .b5 { grid-column:span 4; } .b6 { grid-column:span 4; } .b7 { grid-column:span 4; }
+    @media(max-width:768px){ .b1,.b2,.b3,.b4,.b5,.b6,.b7 { grid-column:span 12; } }
+
+    /* Icon hover */
+    .icon-hover { transition:transform .3s; display:inline-flex; }
+    .icon-hover:hover { transform:rotate(15deg) scale(1.2); }
+
+    /* Float */
+    .float-img { animation:floatAnim 4s ease-in-out infinite; }
+    @keyframes floatAnim { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
+
+    /* Grad text */
+    .grad-text { background:linear-gradient(135deg,#2563eb 0%,#60a5fa 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .grad-red { background:linear-gradient(135deg,#dc2626 0%,#f87171 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+    /* Glow */
+    .glow { box-shadow:0 0 60px rgba(37,99,235,.15); }
+    .glow-sm { box-shadow:0 0 20px rgba(37,99,235,.2); }
+
+    /* Stars */
+    .stars { color:#f59e0b; }
+
+    /* Chat */
+    #chat-widget { position:fixed; bottom:24px; right:24px; z-index:1000; }
+    #chat-bubble { width:60px; height:60px; border-radius:50%; background:linear-gradient(135deg,#2563eb,#1d4ed8); display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; animation:cpulse 2s infinite; }
+    @keyframes cpulse { 0%,100%{box-shadow:0 4px 24px rgba(37,99,235,.5)} 50%{box-shadow:0 4px 40px rgba(37,99,235,.85)} }
+    #chat-panel { position:absolute; bottom:75px; right:0; width:320px; display:none; }
+    #chat-panel.open { display:block; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:#04080f} ::-webkit-scrollbar-thumb{background:#2563eb;border-radius:2px}
+
+    /* Nav */
+    nav { transition:background .3s; }
+    nav.scrolled { background:rgba(4,8,15,.95)!important; backdrop-filter:blur(20px); border-bottom:1px solid rgba(255,255,255,.06); }
+
+    /* Review card hover */
+    .review-card { transition:transform .25s, box-shadow .25s; }
+    .review-card:hover { transform:translateY(-4px); box-shadow:0 12px 40px rgba(37,99,235,.18); }
+
+    /* Img label */
+    .img-label { position:absolute; bottom:8px; left:8px; background:rgba(37,99,235,.9); color:white; font-size:10px; font-weight:700; padding:2px 8px; border-radius:6px; letter-spacing:.5px; text-transform:uppercase; }
+
+    /* Bryant badge */
+    .bryant-badge { background:linear-gradient(135deg,#1e3a8a,#2563eb); border:1px solid rgba(96,165,250,.3); }
+  </style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-follower"></div>
+<canvas id="particle-canvas"></canvas>
+
+<!-- ===== NAV ===== -->
+<nav id="navbar" class="fixed top-0 left-0 right-0 z-50 px-6 py-4">
+  <div class="max-w-7xl mx-auto flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded-xl bryant-badge flex flex-col items-center justify-center">
+        <span class="text-white font-black text-sm leading-none">R.J.</span>
+        <span class="text-blue-300 text-xs leading-none">H&amp;C</span>
+      </div>
+      <div>
+        <div class="font-bold text-white text-lg leading-none">R.J. Heating &amp; Cooling</div>
+        <div class="text-blue-400 text-xs">Serving Northeast Ohio Since 1946</div>
+      </div>
+    </div>
+    <div class="hidden md:flex items-center gap-8 text-sm text-slate-300">
+      <a href="#services" class="hover:text-blue-400 transition-colors">Services</a>
+      <a href="#process" class="hover:text-blue-400 transition-colors">How It Works</a>
+      <a href="#reviews" class="hover:text-blue-400 transition-colors">Reviews</a>
+      <a href="#contact" class="hover:text-blue-400 transition-colors">Contact</a>
+    </div>
+    <a href="tel:2163511520" class="btn-fizzy bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold px-5 py-2.5 rounded-full text-sm">(216) 351-1520</a>
+  </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section id="hero" class="relative min-h-screen flex items-center pt-20 px-6">
+  <div class="max-w-7xl mx-auto w-full grid md:grid-cols-2 gap-12 items-center">
+    <div class="relative z-10">
+      <div class="inline-flex items-center gap-2 glass px-4 py-2 rounded-full text-sm text-blue-400 mb-6 fade-up">
+        <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+        Serving Northeast Ohio Since 1946 &mdash; 341 Verified Reviews
+      </div>
+      <h1 class="text-5xl md:text-7xl font-black leading-none mb-6 fade-up">
+        Comfort &amp; Safety
+        <span class="block grad-text">Since Before
+Your Parents Were Born.</span>
+      </h1>
+      <p class="text-slate-400 text-xl mb-8 max-w-lg fade-up">R.J. Heating &amp; Cooling has kept Northeast Ohio comfortable since 1946. NATE-certified technicians, Bryant factory authorized dealer, and a track record that speaks for itself across 341 five-star reviews.</p>
+      <div class="flex flex-wrap gap-4 fade-up">
+        <a href="tel:2163511520" class="btn-fizzy bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold px-8 py-4 rounded-2xl text-lg glow">Call Now &rarr;</a>
+        <a href="#services" class="btn-fizzy glass text-white font-semibold px-8 py-4 rounded-2xl text-lg">View Services</a>
+      </div>
+      <div class="flex items-center gap-6 mt-10 fade-up">
+        <div class="text-center"><div class="text-3xl font-black text-white">1946</div><div class="text-xs text-slate-500">Est. in Cleveland</div></div>
+        <div class="w-px h-12 bg-slate-700"></div>
+        <div class="text-center"><div class="text-3xl font-black text-white">4.9</div><div class="stars text-xs">&#9733;&#9733;&#9733;&#9733;&#9733;</div></div>
+        <div class="w-px h-12 bg-slate-700"></div>
+        <div class="text-center"><div class="text-3xl font-black text-white">341</div><div class="text-xs text-slate-500">Verified Reviews</div></div>
+      </div>
+    </div>
+    <!-- HERO IMAGE -->
+    <div class="relative z-10 flex justify-center fade-right">
+      <div class="relative">
+        <div class="absolute inset-0 bg-blue-600 rounded-3xl blur-3xl opacity-20 scale-110"></div>
+        <div class="float-img relative glass rounded-3xl overflow-hidden glow">
+          <div class="relative">
+            <img src="https://user-gen-media-assets.s3.amazonaws.com/gemini_images/65bbd72c-9cb0-4628-a1c8-ba569daab3dd.png"
+              alt="R.J. Heating & Cooling NATE-certified technician"
+              class="w-full object-cover rounded-3xl" style="max-height:440px;object-position:center top;" />
+            <div class="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-slate-900/95 to-transparent rounded-b-3xl"></div>
+            <div class="img-label">Replace with R.J. team photo</div>
+            <div class="absolute bottom-4 left-4 right-4 flex justify-between items-end">
+              <div>
+                <div class="text-white font-bold text-sm">NATE-Certified Technician</div>
+                <div class="text-blue-400 text-xs">On-site, Same Day Available</div>
+              </div>
+              <div class="bryant-badge rounded-xl px-3 py-1.5 text-xs text-blue-200 font-semibold">Bryant Authorized Dealer</div>
+            </div>
+          </div>
+        </div>
+        <div class="absolute -bottom-4 -right-4 glass-blue rounded-2xl px-5 py-3">
+          <div class="text-blue-400 font-bold text-sm">&#128994; Lines Open Now</div>
+          <div class="text-sm text-slate-300">(216) 351-1520</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce z-10">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+  </div>
+</section>
+
+<!-- ===== TRUST SIGNALS ===== -->
+<section id="trust" class="relative z-10 py-16 px-6">
+  <div class="max-w-7xl mx-auto">
+    <p class="text-center text-slate-500 text-sm uppercase tracking-widest mb-8 fade-up">Certified, Authorized &amp; Trusted</p>
+    <div class="glass rounded-2xl px-8 py-8 flex flex-wrap items-center justify-center gap-10 fade-up">
+      <div class="flex items-center gap-2 text-slate-300 font-semibold">
+        <div class="w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center text-blue-300 font-black text-xs">NATE</div><span>NATE Certified Techs</span>
+      </div>
+      <div class="flex items-center gap-2 text-slate-300 font-semibold">
+        <div class="w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center text-blue-200 font-black text-xs">BRY</div><span>Bryant Factory Authorized</span>
+      </div>
+      <div class="flex items-center gap-2 text-slate-300 font-semibold">
+        <div class="w-10 h-10 rounded-full bg-yellow-900 flex items-center justify-center text-yellow-300 font-black text-xs">&#9733;</div><span>341 Google Reviews</span>
+      </div>
+      <div class="flex items-center gap-2 text-slate-300 font-semibold">
+        <div class="w-10 h-10 rounded-full bg-green-900 flex items-center justify-center text-green-300 font-black text-xs">EPA</div><span>EPA Certified</span>
+      </div>
+      <div class="flex items-center gap-2 text-slate-300 font-semibold">
+        <div class="w-10 h-10 rounded-full bg-red-900 flex items-center justify-center text-red-300 font-bold text-xs">&#39;46</div><span>In Business Since 1946</span>
+      </div>
+      <div class="flex items-center gap-2 text-slate-300 font-semibold">
+        <div class="w-10 h-10 rounded-full bg-purple-900 flex items-center justify-center text-purple-300 font-bold text-xs">OH</div><span>Ohio Licensed &amp; Insured</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SERVICES BENTO ===== -->
+<section id="services" class="relative z-10 py-20 px-6">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-14">
+      <p class="text-blue-400 text-sm uppercase tracking-widest mb-3 fade-up">What We Do Best</p>
+      <h2 class="text-4xl md:text-5xl font-black fade-up">All Makes. All Models.<br/><span class="grad-text">One Number to Call.</span></h2>
+    </div>
+    <div class="bento-grid">
+      <!-- Card 1 -->
+      <div class="b1 glass rounded-3xl overflow-hidden glow fade-up" style="min-height:300px">
+        <div class="relative h-44 overflow-hidden">
+          <img src="https://user-gen-media-assets.s3.amazonaws.com/gemini_images/65bbd72c-9cb0-4628-a1c8-ba569daab3dd.png"
+            alt="Furnace repair and service" class="w-full h-full object-cover object-top" />
+          <div class="absolute inset-0 bg-gradient-to-b from-transparent to-slate-900/95"></div>
+          <div class="img-label">Replace with R.J. furnace job photo</div>
+        </div>
+        <div class="p-8">
+          <h3 class="text-2xl font-bold text-white mb-3">Furnace Repair &amp; Replacement</h3>
+          <p class="text-slate-400 leading-relaxed">From a pilot light that won't stay lit to a full system that's given up, we diagnose fast and fix it right. We service all brands and can replace with a Bryant system that cuts your heating bill significantly.</p>
+          <a href="tel:2163511520" class="mt-5 inline-flex items-center gap-2 text-blue-400 font-semibold text-sm">
+            Schedule service <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+      </div>
+      <!-- Card 2 -->
+      <div class="b2 glass-blue rounded-3xl p-8 fade-up" style="min-height:300px">
+        <div class="icon-hover w-14 h-14 rounded-2xl bg-blue-500/20 items-center justify-center mb-5">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m8.66-9h-1M4.34 12h-1"/><circle cx="12" cy="12" r="4" stroke-width="1.5"/></svg>
+        </div>
+        <h3 class="text-2xl font-bold text-white mb-3">Air Conditioning Service</h3>
+        <p class="text-slate-400">AC tune-ups, refrigerant recharges, evaporator coil cleaning, and full system replacements. We'll keep you cool all summer and tell you exactly what you need, nothing more.</p>
+        <div class="mt-4 glass rounded-xl px-4 py-3">
+          <div class="text-blue-400 text-sm font-semibold">Special Offer Available</div>
+          <div class="text-xs text-slate-400">Check our site for current A/C tune-up coupons</div>
+        </div>
+      </div>
+      <!-- Card 3 -->
+      <div class="b3 glass rounded-3xl p-8 fade-up">
+        <div class="icon-hover w-14 h-14 rounded-2xl bg-green-500/20 items-center justify-center mb-5">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </div>
+        <h3 class="text-2xl font-bold text-white mb-3">Bryant Evolution Heat Pumps</h3>
+        <p class="text-slate-400">The Bryant Evolution system uses variable-speed operation and intelligent system control for superior comfort and lower energy bills. One of the most efficient systems on the market.</p>
+      </div>
+      <!-- Card 4 -->
+      <div class="b4 glass-blue rounded-3xl p-8 fade-up">
+        <div class="icon-hover w-14 h-14 rounded-2xl bg-blue-500/20 items-center justify-center mb-5">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        </div>
+        <h3 class="text-2xl font-bold text-white mb-3">Service Agreements</h3>
+        <p class="text-slate-400 leading-relaxed">Keep your systems running efficiently and save money on utilities month after month. Our service agreements cover preventive maintenance, priority scheduling, and discounted repairs so breakdowns don't catch you off guard.</p>
+        <div class="mt-4 flex gap-3 flex-wrap">
+          <span class="glass px-3 py-1 rounded-full text-xs text-slate-300">Priority Scheduling</span>
+          <span class="glass px-3 py-1 rounded-full text-xs text-slate-300">Discounted Repairs</span>
+          <span class="glass px-3 py-1 rounded-full text-xs text-slate-300">Preventive Maintenance</span>
+        </div>
+      </div>
+      <!-- Bottom 3 -->
+      <div class="b5 glass rounded-3xl p-6 fade-up">
+        <div class="icon-hover w-12 h-12 rounded-xl bg-cyan-500/20 items-center justify-center mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
+        </div>
+        <h3 class="text-lg font-bold text-white mb-2">Indoor Air Quality</h3>
+        <p class="text-slate-400 text-sm">iWave air purification delivers cleaner, fresher air throughout your home. Breathe easier every single day.</p>
+      </div>
+      <div class="b6 glass-blue rounded-3xl p-6 fade-up">
+        <div class="icon-hover w-12 h-12 rounded-xl bg-red-500/20 items-center justify-center mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </div>
+        <h3 class="text-lg font-bold text-white mb-2">Emergency Service</h3>
+        <p class="text-slate-400 text-sm">HVAC emergencies don't wait. Our emergency help line gets a tech dispatched fast, including late-night calls.</p>
+      </div>
+      <div class="b7 glass rounded-3xl p-6 fade-up">
+        <div class="icon-hover w-12 h-12 rounded-xl bg-purple-500/20 items-center justify-center mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        </div>
+        <h3 class="text-lg font-bold text-white mb-2">Commercial HVAC</h3>
+        <p class="text-slate-400 text-sm">Residential and commercial service across all of Northeast Ohio. All brands, all systems.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PROCESS ===== -->
+<section id="process" class="relative z-10 py-20 px-6">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-14">
+      <p class="text-blue-400 text-sm uppercase tracking-widest mb-3 fade-up">No Guesswork. No Pressure.</p>
+      <h2 class="text-4xl md:text-5xl font-black fade-up">How R.J. Gets You<br/><span class="grad-text">Back to Comfortable</span></h2>
+    </div>
+    <div class="grid md:grid-cols-4 gap-6">
+      <div class="glass rounded-3xl p-7 fade-up">
+        <div class="text-6xl font-black text-blue-500/20 leading-none mb-4">01</div>
+        <h3 class="text-xl font-bold text-white mb-2">Call or Request Online</h3>
+        <p class="text-slate-400 text-sm">Call (216) 351-1520 or use our online form. Our friendly office staff will get you scheduled fast, often same-day.</p>
+      </div>
+      <div class="glass rounded-3xl p-7 fade-up">
+        <div class="text-6xl font-black text-blue-500/20 leading-none mb-4">02</div>
+        <h3 class="text-xl font-bold text-white mb-2">Tech Arrives On Time</h3>
+        <p class="text-slate-400 text-sm">Our NATE-certified tech shows up in a marked truck with a fully stocked parts van. No waiting around, no vague windows.</p>
+      </div>
+      <div class="glass rounded-3xl p-7 fade-up">
+        <div class="text-6xl font-black text-blue-500/20 leading-none mb-4">03</div>
+        <h3 class="text-xl font-bold text-white mb-2">Honest Upfront Diagnosis</h3>
+        <p class="text-slate-400 text-sm">We explain exactly what's wrong and give you a clear price before we touch anything. You decide. No pressure, no upsell.</p>
+      </div>
+      <div class="glass-blue rounded-3xl p-7 fade-up">
+        <div class="text-6xl font-black text-blue-500/20 leading-none mb-4">04</div>
+        <h3 class="text-xl font-bold text-white mb-2">Fixed Right. Guaranteed.</h3>
+        <p class="text-slate-400 text-sm">Job done and cleaned up. You get a full summary and our labor warranty. That's been our standard since 1946.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== REVIEWS ===== -->
+<section id="reviews" class="relative z-10 py-20 px-6">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-14">
+      <p class="text-blue-400 text-sm uppercase tracking-widest mb-3 fade-up">341 Verified Reviews</p>
+      <h2 class="text-4xl md:text-5xl font-black fade-up">Don't Take Our Word.<br/><span class="grad-text">Take Theirs.</span></h2>
+    </div>
+    <!-- REAL reviews from rjheating.com -->
+    <div class="grid md:grid-cols-3 gap-6 mb-6">
+      <div class="review-card glass rounded-3xl p-7 fade-up">
+        <div class="flex items-center justify-between mb-4">
+          <span class="stars text-lg">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          <span class="text-slate-500 text-xs">06/23/2026 &mdash; Cleveland</span>
+        </div>
+        <p class="text-slate-300 text-sm leading-relaxed italic">"Justin Harper ong RJ heating and cooling the best in the business. The techs are phenomenal, they are honest and very professional."</p>
+        <div class="mt-4 border-t border-slate-800 pt-4 flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-blue-900 flex items-center justify-center text-blue-300 font-bold text-sm">K</div>
+          <div><div class="text-white text-sm font-semibold">Kelvin</div><div class="text-slate-500 text-xs">Verified Customer</div></div>
+        </div>
+      </div>
+      <div class="review-card glass-blue rounded-3xl p-7 fade-up">
+        <div class="flex items-center justify-between mb-4">
+          <span class="stars text-lg">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          <span class="text-slate-500 text-xs">06/12/2026 &mdash; Cleveland</span>
+        </div>
+        <p class="text-slate-300 text-sm leading-relaxed italic">"Quick turnaround time from calling to scheduling. Justin was prompt, very thorough in explaining the issue and honest about options for resolution."</p>
+        <div class="mt-4 border-t border-slate-700 pt-4 flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-blue-900 flex items-center justify-center text-blue-300 font-bold text-sm">H</div>
+          <div><div class="text-white text-sm font-semibold">Heather</div><div class="text-slate-500 text-xs">Verified Customer</div></div>
+        </div>
+      </div>
+      <div class="review-card glass rounded-3xl p-7 fade-up">
+        <div class="flex items-center justify-between mb-4">
+          <span class="stars text-lg">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          <span class="text-slate-500 text-xs">06/11/2026 &mdash; Parma</span>
+        </div>
+        <p class="text-slate-300 text-sm leading-relaxed italic">"Had an emergency leak in our furnace/AC unit late at night and the emergency help line got us a technician very quickly. Justin H was our technician &mdash; outstanding."</p>
+        <div class="mt-4 border-t border-slate-800 pt-4 flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-blue-900 flex items-center justify-center text-blue-300 font-bold text-sm">N</div>
+          <div><div class="text-white text-sm font-semibold">Nick H.</div><div class="text-slate-500 text-xs">Verified Customer, Parma</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid md:grid-cols-3 gap-6 mb-14">
+      <div class="review-card glass rounded-3xl p-7 fade-up">
+        <div class="flex items-center justify-between mb-4">
+          <span class="stars text-lg">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          <span class="text-slate-500 text-xs">05/18/2026 &mdash; Cleveland</span>
+        </div>
+        <p class="text-slate-300 text-sm leading-relaxed italic">"Justin came today to diagnose my issue. He fixed it within an hour and my house is cooling down as we speak!"</p>
+        <div class="mt-4 border-t border-slate-800 pt-4 flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-blue-900 flex items-center justify-center text-blue-300 font-bold text-sm">R</div>
+          <div><div class="text-white text-sm font-semibold">Rachel Hopek</div><div class="text-slate-500 text-xs">Verified Customer</div></div>
+        </div>
+      </div>
+      <div class="review-card glass-blue rounded-3xl p-7 fade-up">
+        <div class="flex items-center justify-between mb-4">
+          <span class="stars text-lg">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          <span class="text-slate-500 text-xs">05/06/2026 &mdash; Westlake</span>
+        </div>
+        <p class="text-slate-300 text-sm leading-relaxed italic">"Justin was on time, friendly, professional, and thorough. He explained everything and made sure we were comfortable with the work before leaving."</p>
+        <div class="mt-4 border-t border-slate-700 pt-4 flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-blue-900 flex items-center justify-center text-blue-300 font-bold text-sm">K</div>
+          <div><div class="text-white text-sm font-semibold">Kevin &amp; Elaine OLeary</div><div class="text-slate-500 text-xs">Verified Customer, Westlake</div></div>
+        </div>
+      </div>
+      <div class="review-card glass rounded-3xl p-7 fade-up">
+        <div class="flex items-center justify-between mb-4">
+          <span class="stars text-lg">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          <span class="text-slate-500 text-xs">04/02/2026 &mdash; Cleveland</span>
+        </div>
+        <p class="text-slate-300 text-sm leading-relaxed italic">"Justin was soooo awesome, very smooth, professional &amp; quick. Thank you so much!"</p>
+        <div class="mt-4 border-t border-slate-800 pt-4 flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-blue-900 flex items-center justify-center text-blue-300 font-bold text-sm">A</div>
+          <div><div class="text-white text-sm font-semibold">Antwone Garrett</div><div class="text-slate-500 text-xs">Verified Customer</div></div>
+        </div>
+      </div>
+    </div>
+    <!-- Video testimonials -->
+    <div class="glass rounded-3xl p-10 text-center fade-up">
+      <p class="text-blue-400 text-sm uppercase tracking-widest mb-3">Video Testimonials</p>
+      <h3 class="text-2xl font-bold text-white mb-6">40+ R.J. Customers On Camera</h3>
+      <div class="relative rounded-2xl overflow-hidden mb-5">
+        <img src="https://user-gen-media-assets.s3.amazonaws.com/gemini_images/6c178b37-9f64-4e02-8ace-32de7ba8f89b.png"
+          alt="R.J. Heating & Cooling video testimonials" class="w-full object-cover rounded-2xl" />
+        <div class="img-label">Replace with R.J. customer video thumbnails</div>
+      </div>
+      <p class="text-slate-500 text-sm">Real Northeast Ohio homeowners. Real results. No scripts.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== LEAD MAGNET ===== -->
+<section id="leadmagnet" class="relative z-10 py-20 px-6">
+  <div class="max-w-4xl mx-auto">
+    <div class="glass-blue rounded-3xl p-10 md:p-14 text-center glow fade-up">
+      <div class="inline-flex w-16 h-16 rounded-2xl bg-blue-500/20 items-center justify-center mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-9 h-9 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      </div>
+      <h2 class="text-3xl md:text-4xl font-black text-white mb-4">Free: Northeast Ohio Homeowner's<br/><span class="grad-text">HVAC Seasonal Checklist</span></h2>
+      <p class="text-slate-400 text-lg mb-8">Know exactly what to check before winter hits and before summer heats up. This checklist has helped hundreds of Cleveland homeowners avoid costly emergency calls.</p>
+      <form class="flex flex-col md:flex-row gap-4 max-w-lg mx-auto" onsubmit="handleLeadForm(event)">
+        <input type="email" placeholder="Your email address" class="flex-1 bg-slate-800/80 border border-slate-700 rounded-2xl px-5 py-4 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors" required />
+        <button type="submit" class="btn-fizzy bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold px-7 py-4 rounded-2xl whitespace-nowrap">Send Me the Checklist</button>
+      </form>
+      <p class="text-slate-600 text-xs mt-4">No spam. Unsubscribe any time.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CONTACT ===== -->
+<section id="contact" class="relative z-10 py-20 px-6">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid md:grid-cols-2 gap-12 items-center">
+      <div class="fade-left">
+        <p class="text-blue-400 text-sm uppercase tracking-widest mb-3">Serving All of Northeast Ohio</p>
+        <h2 class="text-4xl md:text-5xl font-black mb-6">Ready to Help.<br/><span class="grad-text">Since 1946.</span></h2>
+        <p class="text-slate-400 text-lg mb-8">R.J. Heating &amp; Cooling serves all of Northeast Ohio including Cleveland, Westlake, Parma, Lakewood, and surrounding communities. Give us a call or request a service online.</p>
+        <div class="flex flex-col gap-4">
+          <a href="tel:2163511520" class="btn-fizzy inline-flex items-center gap-4 glass-blue rounded-2xl px-6 py-5 text-white font-bold text-xl glow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.948V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+            (216) 351-1520
+          </a>
+          <a href="https://www.rjheating.com" target="_blank" class="btn-fizzy glass rounded-2xl px-6 py-4 inline-flex items-center gap-3 text-slate-300 font-semibold">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg>
+            Visit rjheating.com for Coupons &amp; Specials
+          </a>
+        </div>
+      </div>
+      <div class="fade-right">
+        <div class="glass rounded-3xl p-8">
+          <h3 class="text-2xl font-bold text-white mb-6">Request a Free Estimate</h3>
+          <form class="flex flex-col gap-4" onsubmit="handleContactForm(event)">
+            <input type="text" placeholder="Your name" class="bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors" required />
+            <input type="tel" placeholder="Phone number" class="bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors" required />
+            <select class="bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:border-blue-500 transition-colors">
+              <option value="">What do you need?</option>
+              <option>Furnace Repair</option><option>Furnace Replacement</option>
+              <option>AC Repair</option><option>AC Installation</option>
+              <option>Heat Pump Install</option><option>Indoor Air Quality</option>
+              <option>Service Agreement</option><option>Emergency Service</option><option>Other</option>
+            </select>
+            <textarea placeholder="Tell us a bit more (optional)" rows="3" class="bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors resize-none"></textarea>
+            <button type="submit" class="btn-fizzy bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold py-4 rounded-2xl text-lg">Get My Free Estimate</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="relative z-10 py-12 px-6 border-t border-slate-800">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid md:grid-cols-4 gap-8 mb-10">
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-11 h-11 rounded-xl bryant-badge flex flex-col items-center justify-center">
+            <span class="text-white font-black text-sm leading-none">R.J.</span>
+            <span class="text-blue-300 text-xs leading-none">H&amp;C</span>
+          </div>
+          <div><div class="font-bold text-white">R.J. Heating &amp; Cooling</div><div class="text-blue-400 text-xs">Northeast Ohio's HVAC Experts Since 1946</div></div>
+        </div>
+        <p class="text-slate-500 text-sm">Cleveland, OH 44135<br/>(216) 351-1520<br/><a href="https://www.rjheating.com" class="text-blue-400 hover:text-blue-300">rjheating.com</a></p>
+      </div>
+      <div>
+        <h4 class="text-white font-semibold mb-4">Services</h4>
+        <ul class="flex flex-col gap-2 text-slate-500 text-sm">
+          <li><a href="#services" class="hover:text-blue-400 transition-colors">Furnace Repair &amp; Replacement</a></li>
+          <li><a href="#services" class="hover:text-blue-400 transition-colors">Air Conditioning Service</a></li>
+          <li><a href="#services" class="hover:text-blue-400 transition-colors">Bryant Heat Pumps</a></li>
+          <li><a href="#services" class="hover:text-blue-400 transition-colors">Indoor Air Quality (iWave)</a></li>
+          <li><a href="#services" class="hover:text-blue-400 transition-colors">Service Agreements</a></li>
+          <li><a href="#services" class="hover:text-blue-400 transition-colors">Emergency Service</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-white font-semibold mb-4">Service Areas</h4>
+        <ul class="flex flex-col gap-2 text-slate-500 text-sm">
+          <li>Cleveland, OH</li><li>Westlake, OH</li><li>Parma, OH</li>
+          <li>Lakewood, OH</li><li>All of Northeast Ohio</li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-white font-semibold mb-4">Company</h4>
+        <ul class="flex flex-col gap-2 text-slate-500 text-sm">
+          <li>In Business Since 1946</li>
+          <li>NATE Certified Technicians</li>
+          <li>Bryant Factory Authorized Dealer</li>
+          <li>341 Verified 5-Star Reviews</li>
+          <li class="pt-2"><a href="tel:2163511520" class="text-blue-400 font-semibold">(216) 351-1520</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="border-t border-slate-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-slate-600 text-xs">
+      <p>&copy; 2026 R.J. Heating &amp; Cooling. All rights reserved. Serving Northeast Ohio since 1946.</p>
+      <div class="flex items-center gap-4">
+        <a href="/llms.txt" class="hover:text-blue-400 transition-colors">AI Directory</a>
+        <span>|</span><a href="https://www.rjheating.com" class="hover:text-blue-400 transition-colors">rjheating.com</a>
+        <span>|</span><a href="#" class="hover:text-blue-400 transition-colors">Privacy Policy</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ===== CHAT WIDGET ===== -->
+<div id="chat-widget">
+  <div id="chat-panel" class="glass-blue rounded-3xl p-5 glow">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-2"><span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span><span class="text-white font-semibold text-sm">R.J. Virtual Front Office</span></div>
+      <button onclick="toggleChat()" class="text-slate-400 hover:text-white text-xl leading-none">&times;</button>
+    </div>
+    <p class="text-slate-300 text-sm mb-4">Hey! Did we miss your call? Or need to book service fast? Message us here and we'll get back to you right away.</p>
+    <input type="text" placeholder="Type your message..." class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-3 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 mb-3" />
+    <button class="w-full btn-fizzy bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold py-2.5 rounded-xl text-sm">Send Message</button>
+    <div class="mt-3 text-center"><a href="tel:2163511520" class="text-blue-400 text-xs font-semibold">Or call (216) 351-1520 directly</a></div>
+  </div>
+  <div id="chat-bubble" onclick="toggleChat()">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+    <div style="position:absolute;top:-6px;right:-6px;width:16px;height:16px;background:#22c55e;border-radius:50%;border:2px solid #04080f"></div>
+  </div>
+</div>
+
+<script>
+const cursor = document.getElementById('cursor');
+const follower = document.getElementById('cursor-follower');
+document.addEventListener('mousemove', e => {
+  cursor.style.left = e.clientX+'px'; cursor.style.top = e.clientY+'px';
+  follower.style.left = e.clientX+'px'; follower.style.top = e.clientY+'px';
+});
+document.querySelectorAll('a,button,input,select,textarea').forEach(el => {
+  el.addEventListener('mouseenter', () => { cursor.style.width='40px'; cursor.style.height='40px'; });
+  el.addEventListener('mouseleave', () => { cursor.style.width='20px'; cursor.style.height='20px'; });
+});
+document.querySelectorAll('.btn-fizzy').forEach(btn => {
+  btn.addEventListener('mousemove', e => {
+    const r = btn.getBoundingClientRect();
+    btn.style.setProperty('--x', ((e.clientX-r.left)/r.width*100)+'%');
+    btn.style.setProperty('--y', ((e.clientY-r.top)/r.height*100)+'%');
+  });
+});
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 40));
+const canvas = document.getElementById('particle-canvas');
+const ctx = canvas.getContext('2d');
+let mouse = {x:null, y:null};
+window.addEventListener('mousemove', e => { mouse.x=e.clientX; mouse.y=e.clientY; });
+function resize(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+resize(); window.addEventListener('resize', resize);
+const pts = Array.from({length:80}, () => ({
+  x:Math.random()*canvas.width, y:Math.random()*canvas.height,
+  r:Math.random()*1.5+.5, dx:(Math.random()-.5)*.3, dy:(Math.random()-.5)*.3,
+  a:Math.random()*.3+.1
+}));
+(function anim(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  pts.forEach(p => {
+    p.x+=p.dx; p.y+=p.dy;
+    if(p.x<0||p.x>canvas.width) p.dx*=-1;
+    if(p.y<0||p.y>canvas.height) p.dy*=-1;
+    if(mouse.x){const d=Math.hypot(p.x-mouse.x,p.y-mouse.y);if(d<120){p.x+=(p.x-mouse.x)*.008;p.y+=(p.y-mouse.y)*.008;}}
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(37,99,235,${p.a})`; ctx.fill();
+  });
+  requestAnimationFrame(anim);
+})();
+gsap.registerPlugin(ScrollTrigger);
+['fade-up','fade-left','fade-right'].forEach(cls => {
+  const props = cls==='fade-up'?{y:40}:cls==='fade-left'?{x:-40}:{x:40};
+  document.querySelectorAll('.'+cls).forEach(el => gsap.fromTo(el,{opacity:0,...props},{opacity:1,x:0,y:0,duration:.85,ease:'power2.out',scrollTrigger:{trigger:el,start:'top 88%',toggleActions:'play none none none'}}));
+});
+function toggleChat(){ document.getElementById('chat-panel').classList.toggle('open'); }
+function handleLeadForm(e){ e.preventDefault(); alert('Thanks! Your HVAC Seasonal Checklist is on its way to your inbox.'); e.target.reset(); }
+function handleContactForm(e){ e.preventDefault(); alert('Got it! Someone from R.J. Heating & Cooling will call you back shortly.'); e.target.reset(); }
+</script>
+</body>
+</html>
